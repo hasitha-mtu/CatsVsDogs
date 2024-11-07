@@ -1,5 +1,5 @@
 import keras.callbacks
-import matplotlib as plt
+import matplotlib.pyplot as plt
 from preprocessing import load_images
 from model import get_model
 
