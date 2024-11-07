@@ -2,17 +2,23 @@ import keras.callbacks
 import matplotlib.pyplot as plt
 from preprocessing import load_images
 from model import get_model
+from datetime import datetime
 
 
 def train_model():
     (train_dataset, validation_dataset, test_dataset) = load_images()
     model = get_model()
+    tensorboard = keras.callbacks.TensorBoard(
+        log_dir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S"),
+        histogram_freq=1
+    )
     callbacks = [
         keras.callbacks.ModelCheckpoint(
             filepath="convnet_from_scratch.keras",
             save_best_only=True,
             monitor="val_loss"
-        )
+        ),
+        tensorboard
     ]
     history = model.fit(
         train_dataset,

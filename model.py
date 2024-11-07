@@ -18,7 +18,7 @@ def get_model():
     outputs = layers.Dense(1, activation="sigmoid")(x)
     model = keras.Model(inputs=inputs, outputs=outputs)
     print(f"Model information : {model.summary()}")
-    model.compile(loss="categorical_crossentropy",
+    model.compile(loss="binary_crossentropy",
                   optimizer="rmsprop",
                   metrics=["accuracy"])
     return model
