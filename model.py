@@ -1,6 +1,5 @@
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.python.keras.utils.version_utils import callbacks
 
 
 def get_model():
@@ -84,6 +83,36 @@ def pre_trained_model_for_data_augmentation():
     )
     return model
 
+def tune_pre_trained_model_for_data_augmentation():
+    data_augmentation = keras.Sequential([
+        layers.RandomFlip("horizontal"),
+        layers.RandomRotation(0.1),
+        layers.RandomZoom(0.2)
+    ])
+    inputs = keras.Input(shape=(180, 180, 3))
+    x = data_augmentation(inputs)
+    x = keras.applications.vgg16.preprocess_input(x)
+    conv_base = keras.applications.vgg16.VGG16(
+        weights="imagenet",
+        include_top=False
+    )
+    conv_base.trainable=False
+    x = conv_base(x)
+    x = layers.Flatten()(x)
+    x = layers.Dense(256)(x)
+    x = layers.Dropout(0.5)(x)
+    outputs = layers.Dense(1, activation="sigmoid")(x)
+    model = keras.Model(
+        inputs=inputs,
+        outputs=outputs
+    )
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer=keras.optimizers.RMSprop(learning_rate=1e-5),
+        metrics=["accuracy"]
+    )
+    return model, conv_base
+
 if __name__ == "__main__":
     # get_model()
-    pre_trained_model()
+    tune_pre_trained_model_for_data_augmentation()

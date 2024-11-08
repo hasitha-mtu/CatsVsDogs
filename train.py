@@ -4,8 +4,11 @@ import keras.callbacks
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
+from keras.applications.densenet import layers
 
-from model import get_model, pre_trained_model, get_conv_base, pre_trained_model_for_data_augmentation
+from model import get_model, pre_trained_model, get_conv_base, pre_trained_model_for_data_augmentation, \
+    tune_pre_trained_model_for_data_augmentation
 from preprocessing import load_images
 
 
@@ -44,9 +47,15 @@ def get_features_and_labels(dataset):
     return np.concatenate(all_features), np.concatenate(all_labels)
 
 
-def check_test_accuracy():
+def check_test_accuracy(model_file_name):
     (_, _, test_dataset) = load_images()
-    test_model = keras.models.load_model("feature_extraction_with_augmentation.keras")
+    test_model = keras.models.load_model(model_file_name)
+    test_loss, test_acc = test_model.evaluate(test_dataset)
+    print(f"Test accuracy: {test_acc:.3f}")
+    return None
+
+def check_test_accuracy_with_test_dataset(model_file_name, test_dataset):
+    test_model = keras.models.load_model(model_file_name)
     test_loss, test_acc = test_model.evaluate(test_dataset)
     print(f"Test accuracy: {test_acc:.3f}")
     return None
@@ -91,8 +100,53 @@ def train_preloaded_model_with_augmentation():
     )
     return history
 
+def train_tuned_preloaded_model_with_augmentation():
+    (train_dataset, validation_dataset, test_dataset) = load_images()
+    callbacks = [
+        keras.callbacks.ModelCheckpoint(
+            filepath="fine_tuning.keras",
+            save_best_only=True,
+            monitor="val_loss"
+        )
+    ]
+    model, conv_base = tune_pre_trained_model_for_data_augmentation()
+    _ = model.fit(
+        train_dataset,
+        epochs=50,
+        validation_data=validation_dataset,
+        callbacks=callbacks
+    )
+    conv_base.trainable = True
+    for layer in conv_base.layers[:-4]:
+        layer.trainable = False
+
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer=keras.optimizers.RMSprop(1e-5),
+        metrics=["accuracy"]
+    )
+
+    callbacks = [
+        keras.callbacks.ModelCheckpoint(
+            filepath="fine_tuning.keras",
+            save_best_only=True,
+            monitor="val_loss"
+        )
+    ]
+
+    history = model.fit(
+        test_dataset,
+        epochs=30,
+        validation_data=validation_dataset,
+        callbacks=callbacks
+    )
+
+
+    check_test_accuracy_with_test_dataset("fine_tuning.keras", test_dataset)
+    return history
+
 if __name__ == "__main__":
-    history = train_preloaded_model_with_augmentation()
+    history = train_tuned_preloaded_model_with_augmentation()
     accuracy = history.history["accuracy"]
     val_accuracy = history.history["val_accuracy"]
     loss = history.history["loss"]
@@ -110,4 +164,4 @@ if __name__ == "__main__":
     plt.show()
 
 if __name__ == "__main__":
-    check_test_accuracy()
+    check_test_accuracy("fine_tuning.keras")
