@@ -8,20 +8,20 @@ from tensorflow import keras
 from keras.applications.densenet import layers
 
 from model import get_model, pre_trained_model, get_conv_base, pre_trained_model_for_data_augmentation, \
-    tune_pre_trained_model_for_data_augmentation
+    tune_pre_trained_model_for_data_augmentation, get_model_from_chapter9
 from preprocessing import load_images
 
 
 def train_model():
     (train_dataset, validation_dataset, test_dataset) = load_images()
-    model = get_model()
+    model = get_model_from_chapter9()
     tensorboard = keras.callbacks.TensorBoard(
         log_dir="logs/fit/" + datetime.now().strftime("%Y%m%d-%H%M%S"),
         histogram_freq=1
     )
     callbacks = [
         keras.callbacks.ModelCheckpoint(
-            filepath="convnet_from_scratch_with_augmentation.keras",
+            filepath="convnet_from_chapter9.keras",
             save_best_only=True,
             monitor="val_loss"
         ),
@@ -146,7 +146,7 @@ def train_tuned_preloaded_model_with_augmentation():
     return history
 
 if __name__ == "__main__":
-    history = train_tuned_preloaded_model_with_augmentation()
+    history = train_model()
     accuracy = history.history["accuracy"]
     val_accuracy = history.history["val_accuracy"]
     loss = history.history["loss"]
