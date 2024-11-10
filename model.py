@@ -151,6 +151,16 @@ def get_model_from_chapter9():
     )
     return model
 
+def get_saved_model(save_model_file = "convnet_from_scratch_with_augmentation.keras"):
+    model = keras.models.load_model(save_model_file)
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer="rmsprop",
+        metrics=["accuracy"]
+    )
+    print(f"Model info: {model.summary()}")
+    return model
+
 if __name__ == "__main__":
     # get_model()
     tune_pre_trained_model_for_data_augmentation()
